@@ -14,19 +14,26 @@ import java.util.Date;
  */
 public class Directorio {
     private String path;
+    private String nombre;
     private Date fechaCreacion;
+    private Directorio padre;
     private ArrayList<Directorio> subDirectorios;
     private ArrayList<Archivo> archivos;
 
-    public Directorio(String path) {
-        this.path = path;
+    public Directorio(String path, String nombre, Directorio padre) {
+        this.nombre = nombre;
+        this.path = path + "/" + nombre;
         this.fechaCreacion = new Date();
         this.subDirectorios = new ArrayList<>();
         this.archivos = new ArrayList<>();
     }
     
     public void añadirSubdirectorio(Directorio subDirectorio){
-        subDirectorios.add(subDirectorio);
+        if (!this.existeDirectorio(subDirectorio.nombre)) {
+            subDirectorios.add(subDirectorio);
+        } else {
+            throw new IllegalArgumentException("Directorio ya existe");
+        }
     }
     
     public void añadirArchivo(Archivo archivo){
@@ -40,4 +47,48 @@ public class Directorio {
     public void eliminarArchivo(Archivo archivo){
         archivos.remove(archivo);
     }
+
+    public String getPath() {
+        return path;
+    }
+    
+    private boolean existeDirectorio(String nombre){
+        for (int i = 0; i < subDirectorios.size(); i++) {
+            if (subDirectorios.get(i).nombre.equals(nombre)) {
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    public Directorio obtenerDirectorio(String nombre){
+        for (int i = 0; i < subDirectorios.size(); i++) {
+            if (subDirectorios.get(i).nombre.equals(nombre)) {
+                return subDirectorios.get(i);
+            }
+        }
+        throw new IllegalArgumentException("Directorio no existe");
+    }
+
+    public Directorio getPadre() {
+        return padre;
+    }
+    
+    public void imprimirContenido(){
+        for (int i = 0; i < subDirectorios.size(); i++) {
+            Directorio dir = subDirectorios.get(i);
+            System.out.println(dir.getNombre()+" | Directorio");
+        }
+        
+        for (int i = 0; i < archivos.size(); i++) {
+            Archivo archivo = archivos.get(i);
+            System.out.println(archivo.getNombre()+" | Archivo");
+        }
+    }
+
+    public String getNombre() {
+        return nombre;
+    }
+    
+    
 }

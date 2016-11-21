@@ -13,15 +13,23 @@ import java.util.Date;
  */
 public class Archivo {
     private String nombre;
-    private String extension;
+    private String path;
     private Date fechaCreacion;
     private Date fechaModificacion;
 
-    public Archivo(String nombre, String extension) {
+    public Archivo(String path, String nombre) {
+        this.path = path;
         this.nombre = nombre;
-        this.extension = extension;
         this.fechaCreacion = new Date();
         this.fechaModificacion = new Date();
+    }
+    
+    public String getPathCompleto(){
+        return this.path + "/" +this.nombre;
+    }
+
+    public String getNombre() {
+        return nombre;
     }
     
     
