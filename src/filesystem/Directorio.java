@@ -22,7 +22,8 @@ public class Directorio {
 
     public Directorio(String path, String nombre, Directorio padre) {
         this.nombre = nombre;
-        this.path = path + "/" + nombre;
+        this.padre =padre;
+        this.path = path + nombre + "\\" ;
         this.fechaCreacion = new Date();
         this.subDirectorios = new ArrayList<>();
         this.archivos = new ArrayList<>();
@@ -45,7 +46,13 @@ public class Directorio {
     }
     
     public void eliminarArchivo(Archivo archivo){
-        archivos.remove(archivo);
+        Archivo elemento;
+        for (int contador = 0; contador < archivos.size(); contador++) {
+            elemento = archivos.get(contador);
+            if ((elemento.getNombre()).equals(archivo.getNombre())){
+                archivos.remove(contador);
+            }
+        }
     }
 
     public String getPath() {
@@ -90,5 +97,58 @@ public class Directorio {
         return nombre;
     }
     
+    public Archivo obtenerArchivo(String nombre){
+        Archivo resultado;
+        for (int contador = 0; contador < archivos.size(); contador++) {
+            resultado = archivos.get(contador);
+            if (resultado.getNombre().equals(nombre)){
+                return resultado;
+            }
+        }
+        throw new IllegalArgumentException("Archivo no existe");
+    }
+    public void ActualizarFechaModificacion(String nombre){
+        Archivo archivo;
+        for (int contador = 0; contador < archivos.size(); contador++) {
+            archivo = archivos.get(contador);
+            if (archivo.getNombre().equals(nombre)){
+                archivos.get(contador).setFechaModificacion(new Date());
+                return;
+            }
+        }
+        throw new IllegalArgumentException("Archivo no existe");
+    }
+    public boolean contieneArchivo(String nombre){
+        for (int contador = 0; contador < archivos.size(); contador++) {
+            Archivo archivo = archivos.get(contador);
+            if (archivo.getNombre().equals(nombre)){
+                return true;
+            }
+        }
+        return false;
+    }
     
+    
+    
+    public String tree(int cantidad){
+        String resultado="";
+        resultado += repeat(" ", cantidad)+ "|->" + this.nombre+"\n";
+        for(int contador = 0; contador < subDirectorios.size();contador++){
+            resultado += subDirectorios.get(contador).tree(cantidad+2);
+        }
+        
+        for(int contador = 0; contador < archivos.size();contador++){
+            resultado +=repeat(" ", cantidad)+ archivos.get(contador).getNombre()+"\n";
+        }
+        
+        return resultado;
+    }
+    
+    private String repeat(String caracter,int cantidad){
+        String resultado="";
+        for (int contador = 0; contador < cantidad; contador++) {
+            resultado+=caracter;
+        }
+        return resultado;
+    }
 }

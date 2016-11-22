@@ -5,6 +5,8 @@
  */
 package filesystem;
 
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,6 +18,10 @@ import java.util.regex.Pattern;
 public class Main {
     public static void main(String args[]) {
         FileSystem f = new FileSystem();
-        f.start();
+        try {
+            f.start();
+        } catch (Exception ex) {
+            Logger.getLogger(Main.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
 }

@@ -16,6 +16,27 @@ public class Archivo {
     private String path;
     private Date fechaCreacion;
     private Date fechaModificacion;
+    private int copias = 0;
+
+    public int getCopias() {
+        return copias;
+    }
+    
+    public void aumentarCopias(){
+        copias++;
+    }
+    
+    public void setFechaModificacion(Date fechaModificacion) {
+        this.fechaModificacion = fechaModificacion;
+    }
+
+    public String getFechaModificacion() {
+        return fechaModificacion.toString();
+    }
+    
+    public String getFechaCreacion() {
+        return fechaCreacion.toString();
+    }
 
     public Archivo(String path, String nombre) {
         this.path = path;
@@ -25,7 +46,7 @@ public class Archivo {
     }
     
     public String getPathCompleto(){
-        return this.path + "/" +this.nombre;
+        return this.path + this.nombre;
     }
 
     public String getNombre() {
