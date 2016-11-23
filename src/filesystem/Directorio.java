@@ -123,12 +123,13 @@ public class Directorio {
         }
         throw new IllegalArgumentException("Archivo no existe");
     }
-    public void ActualizarFechaModificacion(String nombre){
+    public void ActualizarFechaModificacion(String nombre, int size){
         Archivo archivo;
         for (int contador = 0; contador < archivos.size(); contador++) {
             archivo = archivos.get(contador);
             if (archivo.getNombre().equals(nombre)){
                 archivos.get(contador).setFechaModificacion(new Date());
+                archivos.get(contador).setSize(size);
                 return;
             }
         }

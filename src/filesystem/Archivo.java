@@ -19,6 +19,10 @@ public class Archivo {
     private int copias = 0;
     private int size;
 
+    public void setSize(int size) {
+        this.size = size;
+    }
+
     public int getCopias() {
         return copias;
     }

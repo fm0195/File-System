@@ -256,7 +256,7 @@ public class FileSystem {
                     int[] sectoresAsignados = obtenerSectores(stringSectores.length);
                     escribirSectores(stringSectores, sectoresAsignados);
                     tabla.put(archivo.getPathCompleto(), sectoresAsignados);
-                    actualizarFechaModificacion(nombre);
+                    actualizarFechaModificacion(nombre,contenido.length());
                 }else{
                     throw new IOException("No hay suficiente espacio para modificar el archivo.");
                 }
@@ -407,8 +407,8 @@ public class FileSystem {
         return file.exists();
     }
     
-    private void actualizarFechaModificacion(String nombre){
-        dirActual.ActualizarFechaModificacion(nombre);
+    private void actualizarFechaModificacion(String nombre, int size){
+        dirActual.ActualizarFechaModificacion(nombre,size);
     }
        
     private void cp(String fuente, String destino) throws IOException{
