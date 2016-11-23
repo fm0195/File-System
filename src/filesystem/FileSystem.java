@@ -66,61 +66,30 @@ public class FileSystem {
                             ls();
                             break;
                         case "mod":
-                            if (subString.length == 3){
-                                String valor = obtenerString(input);
-                                mod(subString[2],valor);
-                            }else{
-                                System.out.println("El comando mod no es válido con la cantidad de parámetros ingresados.");
-                            }
+                            String valor = obtenerString(input);
+                            subString=input.split("\"(.*?)\"");
+                            mod(subString[1].replaceAll("\\s+",""),valor);
                             break;
                         case "con":
-                            if (subString.length == 2){
-                                con(subString[1]);
-                            }else{
-                                System.out.println("El comando con no es válido con la cantidad de parámetros ingresados.");
-                            }
+                            con(subString[1]);
                             break;
                         case "prop":
-                            if (subString.length == 2){
-                                prop(subString[1]);
-                            }else{
-                                System.out.println("El comando prop no es válido con la cantidad de parámetros ingresados.");
-                            }
+                            prop(subString[1]);
                             break;
                         case "cp":
-                            if (subString.length == 3){
-                                cp(subString[1],subString[2]);
-                            }else{
-                                System.out.println("El comando prop no es válido con la cantidad de parámetros ingresados.");
-                            }
+                            cp(subString[1],subString[2]);
                             break;
                         case "mov":
-                            if (subString.length == 3) {
-                                mov(subString[1],subString[2]);
-                            }else{
-                                System.out.println("El comando mov no es válido con la cantidad de parámetros ingresados.");
-                            }
+                            mov(subString[1],subString[2]);
                             break;
                         case "find":
-                            if (subString.length == 2){
-                                find(subString[1], root);
-                            }else{
-                                System.out.println("El comando find no es válido con la cantidad de parámetros ingresados.");
-                            }
+                            find(subString[1], root);
                             break;
                         case "tree":
-                            if(subString.length==1){
-                                System.out.println(root.tree(0));
-                            }else{
-                                System.out.println("El comando tree no es válido con la cantidad de parámetros ingresados.");
-                            }
+                            System.out.println(root.tree(0));
                             break;
                         case "rm":
-                            if(subString.length==2){
-                                rm(subString[1],dirActual);
-                            }else{
-                                System.out.println("El comando rm no es válido con la cantidad de parámetros ingresados.");
-                            }
+                            rm(subString[1],dirActual);
                             break;
                         default:
                             throw new IllegalArgumentException("Comando inicial invalido");
@@ -174,7 +143,7 @@ public class FileSystem {
             //revisar si hay sectores disponibles
             if (haySectoresDisponibles(stringSectores.length)) {
                 //crear archivo 
-                Archivo nuevo = new Archivo(dirActual.getPath(),nombre);
+                Archivo nuevo = new Archivo(dirActual.getPath(),nombre, contenido.length());
                 if (!tabla.containsKey(nuevo.getPathCompleto())) {//debe no existir
                     //asignar sectores
                     int[] sectoresAsignados = obtenerSectores(stringSectores.length);
@@ -242,10 +211,30 @@ public class FileSystem {
     }
     
     private void cd(String nombre){
-        if (nombre.equals("..")) {
-            dirActual = dirActual.getPadre() == null ? dirActual : dirActual.getPadre();
-        } else {
-            dirActual = dirActual.obtenerDirectorio(nombre);
+        Directorio actual = dirActual;
+        String[] rutas = nombre.split("\\\\");
+        if (rutas.length == 1) {
+            if (nombre.equals("..")) {
+                dirActual = dirActual.getPadre() == null ? dirActual : dirActual.getPadre();
+            }else if(nombre.equals("root")){
+                dirActual = root;
+            }else{
+                dirActual = dirActual.obtenerDirectorio(nombre);
+            }
+        }
+         else {
+            dirActual = root;
+            if (!rutas[0].equals("root")) {
+                throw new IllegalArgumentException("Directorio no existe");
+            }
+            for (int i = 1; i < rutas.length; i++) {
+                try {
+                    dirActual = dirActual.obtenerDirectorio(rutas[i]);
+                } catch (IllegalArgumentException e) {
+                    dirActual = actual;
+                    throw new IllegalArgumentException(e.getMessage());
+                }
+            }
         }
     }
     
@@ -255,7 +244,7 @@ public class FileSystem {
     
     private void mod (String nombre, String contenido) throws IOException{
         if (nombre.matches("[0-9A-Za-z()-_]+\\.[A-Za-z]+")) {
-            Archivo archivo = new Archivo(dirActual.getPath(),nombre);
+            Archivo archivo = new Archivo(dirActual.getPath(),nombre, contenido.length());
             if(tabla.containsKey(archivo.getPathCompleto())){
                 String[] stringSectores = split(contenido, this.tamañoSectores);
                     int[] sectores = (int[])tabla.get(archivo.getPathCompleto());
@@ -331,11 +320,10 @@ public class FileSystem {
     
     private void removeArchivo(String nombre, Directorio directorio) throws IOException{
         if (nombre.matches("[0-9A-Za-z]+\\.[A-Za-z]+")) {
-            Archivo archivo = new Archivo(directorio.getPath(),nombre);
+            Archivo archivo = new Archivo(directorio.getPath(),nombre, 0);
             if(tabla.containsKey(archivo.getPathCompleto())){
                 int[] sectores = (int[])tabla.get(archivo.getPathCompleto());
                 liberarSectores(sectores);
-                    
                 tabla.remove(archivo.getPathCompleto(), sectores);
                 directorio.eliminarArchivo(archivo);
             }else{
@@ -348,7 +336,7 @@ public class FileSystem {
     
     private void con(String nombre) throws IOException{
         if (nombre.matches("[0-9A-Za-z()-_]+\\.[A-Za-z]+")) {
-            Archivo archivo = new Archivo(dirActual.getPath(),nombre);
+            Archivo archivo = new Archivo(dirActual.getPath(),nombre, 0);
             if(tabla.containsKey(archivo.getPathCompleto())){
                 int[] sectores = (int[])tabla.get(archivo.getPathCompleto());
                 System.out.println(leerArchivo(sectores));
@@ -390,13 +378,14 @@ public class FileSystem {
     
     private void prop(String nombre){
         if (nombre.matches("[0-9A-Za-z]+\\.[A-Za-z]+")) {
-            Archivo archivo = new Archivo(dirActual.getPath(),nombre);
+            Archivo archivo = new Archivo(dirActual.getPath(),nombre, 0);
             if(tabla.containsKey(archivo.getPathCompleto())){
                 archivo = dirActual.obtenerArchivo(nombre);
                 String res = "Directorio completo: "+archivo.getPathCompleto()+"\n";
                 res += "Nombre: "+archivo.getNombre()+"\n";
                 res += "Fecha de creación: "+archivo.getFechaCreacion()+"\n";
                 res += "Fecha de modificación: "+archivo.getFechaModificacion()+"\n";
+                res += "Tamaño: "+archivo.getSize()+"\n";
                 System.out.println(res);
             }else{
                 throw new IllegalArgumentException("El nombre del archivo ingresado no existe.");
@@ -428,7 +417,7 @@ public class FileSystem {
         }else if(existeArchivo(fuente) && existeDirectorio(destino)){
             copiaVirtual_Virtual(fuente, destino);
         }else{
-            System.out.println("Directorios invalidos ingresados.");
+            throw new IllegalArgumentException("Directorios invalidos ingresados.");
         }
     }
     
@@ -440,7 +429,7 @@ public class FileSystem {
         nombre =  validaNombre(directorio, nombre);
         
         //creo el archivo 
-        Archivo archivoNuevo = new Archivo(directorio.getPath(), nombre);
+        Archivo archivoNuevo = new Archivo(directorio.getPath(), nombre,contenido.length());
         String[] stringSectores = split(contenido, this.tamañoSectores);
         if(stringSectores.length <= sectoresDisponibles.size()){
             int[] sectoresAsignados = obtenerSectores(stringSectores.length);
@@ -481,7 +470,7 @@ public class FileSystem {
             nombre =  validaNombre(directorio, nombre);
             
             //creao el archivo 
-            Archivo archivoNuevo = new Archivo(directorio.getPath(), nombre);
+            Archivo archivoNuevo = new Archivo(directorio.getPath(), nombre, contenido.length());
             String[] stringSectores = split(contenido, this.tamañoSectores);
             if(stringSectores.length <= sectoresDisponibles.size()){
                 int[] sectoresAsignados = obtenerSectores(stringSectores.length);
@@ -590,7 +579,7 @@ public class FileSystem {
                 directorioFuente.eliminarArchivo(archivo);
                 tabla.remove(archivo.getPathCompleto());
                 destino = formatearDestino(destino);
-                Archivo archivoNuevo = new Archivo(destino, nombre);
+                Archivo archivoNuevo = new Archivo(destino, nombre, archivo.getSize());
                 tabla.put(archivoNuevo.getPathCompleto(), sectores);
                 directorioDestino.añadirArchivo(archivoNuevo);
             }else {
