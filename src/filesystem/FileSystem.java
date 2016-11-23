@@ -302,8 +302,9 @@ public class FileSystem {
         }
     }
     private void eliminarSubdirectorios(Directorio padre, ArrayList<Directorio> subDirectorios) throws IOException{
-        for (int contador = 0; contador < subDirectorios.size(); contador++) {
-            Directorio subdirectorio = subDirectorios.get(contador);
+        int total = subDirectorios.size()-1;
+        for (; total >=0 ; total--) {
+            Directorio subdirectorio = subDirectorios.get(total);
             eliminarArchivos(subdirectorio);
             eliminarSubdirectorios(subdirectorio, subdirectorio.getSubDirectorios());
             padre.eliminarSubdirectorio(subdirectorio);
@@ -312,14 +313,15 @@ public class FileSystem {
     
     private void eliminarArchivos(Directorio subDirectorio) throws IOException{
         ArrayList<Archivo> archivos = subDirectorio.getArchivos();
-        for (int contador = 0; contador < archivos.size(); contador++) {
-            Archivo archivo = archivos.get(contador);
+        int total = archivos.size() - 1;
+        for (; total >=0; total--) {
+            Archivo archivo = archivos.get(total);
             removeArchivo(archivo.getNombre(), subDirectorio);
         }    
     }
     
     private void removeArchivo(String nombre, Directorio directorio) throws IOException{
-        if (nombre.matches("[0-9A-Za-z]+\\.[A-Za-z]+")) {
+        if (nombre.matches("[0-9A-Za-z-_()]+\\.[A-Za-z]+")) {
             Archivo archivo = new Archivo(directorio.getPath(),nombre, 0);
             if(tabla.containsKey(archivo.getPathCompleto())){
                 int[] sectores = (int[])tabla.get(archivo.getPathCompleto());
@@ -567,19 +569,31 @@ public class FileSystem {
             
             Directorio directorioDestino = buscarDirectorio(destino);
             String res = "s";
+            Scanner scanner = new Scanner(System.in);
             if (directorioDestino.contieneArchivo(nombre)){
                 System.out.println("El archivo "+nombre+", existe en el directorio destino"
                         + ", ¿desea sobreescribirlo? S/N.");
-                Scanner scanner = new Scanner(System.in);
                 res = scanner.nextLine();
+                
             }
             res = res.replaceAll("\\s+", "");
             res = res.toLowerCase();
             if (res.equals("s")){
+                System.out.println("¿Desea cambiarle el nombre? S/N");
+                res = scanner.nextLine();
+                res = res.replaceAll("\\s+", "");
+                res = res.toLowerCase();
+                if (res.equals("s")){
+                    System.out.println("Digite el nombre del archivo:");
+                    nombre = scanner.nextLine();
+                    if(!nombre.matches("[0-9A-Za-z]+\\.[A-Za-z]+")){
+                        throw new IllegalArgumentException("Formato de archivo invalido.");
+                    }
+                }
                 directorioFuente.eliminarArchivo(archivo);
                 tabla.remove(archivo.getPathCompleto());
                 destino = formatearDestino(destino);
-                Archivo archivoNuevo = new Archivo(destino, nombre, archivo.getSize());
+                Archivo archivoNuevo = new Archivo(destino, nombre,archivo.getSize());
                 tabla.put(archivoNuevo.getPathCompleto(), sectores);
                 directorioDestino.añadirArchivo(archivoNuevo);
             }else {
