@@ -20,6 +20,14 @@ public class Directorio {
     private ArrayList<Directorio> subDirectorios;
     private ArrayList<Archivo> archivos;
 
+    public ArrayList<Directorio> getSubDirectorios() {
+        return subDirectorios;
+    }
+
+    public ArrayList<Archivo> getArchivos() {
+        return archivos;
+    }
+
     public Directorio(String path, String nombre, Directorio padre) {
         this.nombre = nombre;
         this.padre =padre;
@@ -42,7 +50,14 @@ public class Directorio {
     }
     
     public void eliminarSubdirectorio(Directorio subDirectorio){
-        subDirectorios.remove(subDirectorio);
+        Directorio elemento;
+        for (int contador = 0; contador < subDirectorios.size(); contador++) {
+            elemento = subDirectorios.get(contador);
+            if ((elemento.getNombre()).equals(subDirectorio.getNombre())){
+                subDirectorios.remove(contador);
+                return;
+            }
+        }
     }
     
     public void eliminarArchivo(Archivo archivo){
@@ -51,6 +66,7 @@ public class Directorio {
             elemento = archivos.get(contador);
             if ((elemento.getNombre()).equals(archivo.getNombre())){
                 archivos.remove(contador);
+                return;
             }
         }
     }
@@ -118,6 +134,7 @@ public class Directorio {
         }
         throw new IllegalArgumentException("Archivo no existe");
     }
+    
     public boolean contieneArchivo(String nombre){
         for (int contador = 0; contador < archivos.size(); contador++) {
             Archivo archivo = archivos.get(contador);
@@ -128,7 +145,15 @@ public class Directorio {
         return false;
     }
     
-    
+    public boolean contieneSubDirectorio(String nombre){
+        for (int contador = 0; contador < subDirectorios.size(); contador++) {
+            Directorio directorio = subDirectorios.get(contador);
+            if (directorio.getNombre().equals(nombre)){
+                return true;
+            }
+        }
+        return false;
+    }
     
     public String tree(int cantidad){
         String resultado="";

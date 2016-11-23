@@ -95,8 +95,18 @@ public class FileSystem {
                             }
                             break;
                         case "mov":
+                            if (subString.length == 3) {
+                                mov(subString[1],subString[2]);
+                            }else{
+                                System.out.println("El comando mov no es válido con la cantidad de parámetros ingresados.");
+                            }
                             break;
                         case "find":
+                            if (subString.length == 2){
+                                find(subString[1], root);
+                            }else{
+                                System.out.println("El comando find no es válido con la cantidad de parámetros ingresados.");
+                            }
                             break;
                         case "tree":
                             if(subString.length==1){
@@ -107,7 +117,7 @@ public class FileSystem {
                             break;
                         case "rm":
                             if(subString.length==2){
-                                rm(subString[1]);
+                                rm(subString[1],dirActual);
                             }else{
                                 System.out.println("El comando rm no es válido con la cantidad de parámetros ingresados.");
                             }
@@ -292,15 +302,42 @@ public class FileSystem {
         archivo.write(b);
     }
     
-    private void rm(String nombre) throws IOException{
+    private void rm(String nombre, Directorio directorio) throws IOException {
+        if (directorio.contieneSubDirectorio(nombre)){
+            Directorio subDirectorio = directorio.obtenerDirectorio(nombre);
+            eliminarArchivos(subDirectorio);
+            eliminarSubdirectorios(subDirectorio,subDirectorio.getSubDirectorios());
+            directorio.eliminarSubdirectorio(subDirectorio);
+        }else{
+            removeArchivo(nombre, directorio);
+        }
+    }
+    private void eliminarSubdirectorios(Directorio padre, ArrayList<Directorio> subDirectorios) throws IOException{
+        for (int contador = 0; contador < subDirectorios.size(); contador++) {
+            Directorio subdirectorio = subDirectorios.get(contador);
+            eliminarArchivos(subdirectorio);
+            eliminarSubdirectorios(subdirectorio, subdirectorio.getSubDirectorios());
+            padre.eliminarSubdirectorio(subdirectorio);
+        }
+    }
+    
+    private void eliminarArchivos(Directorio subDirectorio) throws IOException{
+        ArrayList<Archivo> archivos = subDirectorio.getArchivos();
+        for (int contador = 0; contador < archivos.size(); contador++) {
+            Archivo archivo = archivos.get(contador);
+            removeArchivo(archivo.getNombre(), subDirectorio);
+        }    
+    }
+    
+    private void removeArchivo(String nombre, Directorio directorio) throws IOException{
         if (nombre.matches("[0-9A-Za-z]+\\.[A-Za-z]+")) {
-            Archivo archivo = new Archivo(dirActual.getPath(),nombre);
+            Archivo archivo = new Archivo(directorio.getPath(),nombre);
             if(tabla.containsKey(archivo.getPathCompleto())){
                 int[] sectores = (int[])tabla.get(archivo.getPathCompleto());
                 liberarSectores(sectores);
                     
                 tabla.remove(archivo.getPathCompleto(), sectores);
-                dirActual.eliminarArchivo(archivo);
+                directorio.eliminarArchivo(archivo);
             }else{
                 throw new IllegalArgumentException("El nombre del archivo ingresado no existe.");
             }
@@ -391,7 +428,7 @@ public class FileSystem {
         }else if(existeArchivo(fuente) && existeDirectorio(destino)){
             copiaVirtual_Virtual(fuente, destino);
         }else{
-                System.out.println("Directorios invalidos ingresados.");
+            System.out.println("Directorios invalidos ingresados.");
         }
     }
     
@@ -402,7 +439,7 @@ public class FileSystem {
         Directorio directorio = buscarDirectorio(destino);
         nombre =  validaNombre(directorio, nombre);
         
-        //creao el archivo 
+        //creo el archivo 
         Archivo archivoNuevo = new Archivo(directorio.getPath(), nombre);
         String[] stringSectores = split(contenido, this.tamañoSectores);
         if(stringSectores.length <= sectoresDisponibles.size()){
@@ -470,8 +507,8 @@ public class FileSystem {
     
     private boolean contieneArchivo(String direccion){
         String[] directorios = direccion.split("\\\\");
-        String archivo = directorios[direccion.length()-1];
-        return archivo.matches("[0-9A-Za-z()]+\\.[A-Za-z]+");
+        String archivo = directorios[directorios.length-1];
+        return archivo.matches("[0-9A-Za-z()-_]+\\.[A-Za-z]+");
     }
     
     private String obtenerNombreArchivo(String direccion){
@@ -529,6 +566,99 @@ public class FileSystem {
           if ( output != null ) {
             output.close();
           }
+        }
+    }
+    private void mov(String fuente, String destino){
+        if (existeArchivo(fuente) && existeDirectorio(destino)) {
+            String dirFuente = ObtenerDirectorioFuente(fuente);
+            String nombre = obtenerNombreArchivo(fuente);
+            Directorio directorioFuente = buscarDirectorio(dirFuente);
+            Archivo archivo = directorioFuente.obtenerArchivo(nombre);
+            int[] sectores = tabla.get(archivo.getPathCompleto());
+            
+            Directorio directorioDestino = buscarDirectorio(destino);
+            String res = "s";
+            if (directorioDestino.contieneArchivo(nombre)){
+                System.out.println("El archivo "+nombre+", existe en el directorio destino"
+                        + ", ¿desea sobreescribirlo? S/N.");
+                Scanner scanner = new Scanner(System.in);
+                res = scanner.nextLine();
+            }
+            res = res.replaceAll("\\s+", "");
+            res = res.toLowerCase();
+            if (res.equals("s")){
+                directorioFuente.eliminarArchivo(archivo);
+                tabla.remove(archivo.getPathCompleto());
+                destino = formatearDestino(destino);
+                Archivo archivoNuevo = new Archivo(destino, nombre);
+                tabla.put(archivoNuevo.getPathCompleto(), sectores);
+                directorioDestino.añadirArchivo(archivoNuevo);
+            }else {
+                System.out.println("Operación cancelada.");
+            }
+            
+        }else{
+            System.out.println("Los Directorios ingresados invalidos.");
+        }
+    }
+    
+    private String formatearDestino(String destino){
+        if (!((destino.charAt(destino.length()-1)) == '\\')){
+            return destino+"\\";
+        }
+        return destino;
+    }
+    
+    private String ObtenerDirectorioFuente(String fuente){
+        String[] datos = fuente.split("\\\\");
+        String res = "";
+        for (int i = 0; i < datos.length-2; i++) {
+            String dato = datos[i];
+            res += dato+"\\";
+        }
+        res += datos[datos.length-2];
+        return res;
+    }
+    
+    private void find(String nombre, Directorio directorio){
+        if(contieneArchivo(nombre)){
+            String[] partes = nombre.split("\\.");
+            if(partes[0].equals("*")){
+                imprimePorExtension(partes[1], directorio.getArchivos());
+            }else{
+                imprimePorNombre(nombre, directorio.getArchivos());
+            }
+        }else{
+            imprimeDirectorios(nombre, directorio.getSubDirectorios());
+        }
+        for (int contador = 0; contador < directorio.getSubDirectorios().size(); contador++) {
+            Directorio subdirectorio = directorio.getSubDirectorios().get(contador);
+            find(nombre, subdirectorio);
+        }
+    }
+    
+    private void imprimePorExtension(String extension,ArrayList<Archivo> archivos){
+        for (int contador = 0; contador < archivos.size(); contador++) {
+            Archivo archivo = archivos.get(contador);
+            String[] partes = archivo.getNombre().split("\\.");
+            if(partes[1].equals(extension))
+                System.out.println(archivo.getPathCompleto());
+        }
+    }
+    
+    private void imprimePorNombre(String nombre, ArrayList<Archivo> archivos){
+        for (int contador = 0; contador < archivos.size(); contador++) {
+            Archivo archivo = archivos.get(contador);
+            if(archivo.getNombre().equals(nombre))
+                System.out.println(archivo.getPathCompleto());
+        }
+    }
+
+    private void imprimeDirectorios(String nombre, ArrayList<Directorio> subDirectorios) {
+        for (int i = 0; i < subDirectorios.size(); i++) {
+            Directorio directorio = subDirectorios.get(i);
+            if (directorio.getNombre().equals(nombre))
+                System.out.println(directorio.getPath());
         }
     }
 }
